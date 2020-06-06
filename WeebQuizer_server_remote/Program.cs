@@ -10,9 +10,9 @@ namespace WeebQuizer_server_remote
             
             Screen_Manager screen = new Screen_Manager();
             screen.WriteLine("Test", horizontal_aligment.center);
-            Console.WriteLine("Hello World!");
+            screen.WriteLine("\u001b[31m Hello World! \u001b[0m");
 
-            var client = new SocketIO("http://localhost:5000");
+            var client = new SocketIO("http://localhost:5000/admin");
             client.On("message", response =>
             {
                 screen.WriteLine("Got message:");
@@ -25,10 +25,9 @@ namespace WeebQuizer_server_remote
             {
                 string input = Console.ReadLine();
                 string[] in_arry = input.Split(" ", 2);
-                string message = "";
 
                 comand = in_arry[0];
-                switch (comand)
+                switch (comand.ToUpper())
                 {
                     case "MSG":                       
                             screen.WriteLine("Sending...", horizontal_aligment.center);
