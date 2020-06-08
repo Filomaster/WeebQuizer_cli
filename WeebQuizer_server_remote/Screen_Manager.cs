@@ -146,8 +146,14 @@ namespace WeebQuizer_server_remote
         /// Aligned to up and left, write from left to right
         /// </summary>
         /// <param name="text">Text to write to the console.</param>
+        public void UpdateLastLine()
+        {
+            this.last_line = Console.CursorTop;
+        }
+        
         public void WriteLine(string text)
         {
+            UpdateLastLine();
             if (ScreenNeedUpdate(vertical_aligment.up) == true)
                 ScreenUpdate();        
             this.text_buffer.Enqueue(text);
@@ -163,6 +169,7 @@ namespace WeebQuizer_server_remote
         /// <param name="horizontal_text_position">Text aligment.</param>
         public void WriteLine(string text, horizontal_aligment horizontal_text_position)
         {
+            UpdateLastLine();
             if (ScreenNeedUpdate(vertical_aligment.up) == true)
                 ScreenUpdate();
             this.text_buffer.Enqueue(text);
@@ -179,11 +186,21 @@ namespace WeebQuizer_server_remote
         /// <param name="text_position_vertical"></param>
         public void WriteLine(string text, horizontal_aligment text_position_horizontal, vertical_aligment text_position_vertical)
         {
+            UpdateLastLine();
             if (ScreenNeedUpdate(text_position_vertical) == true)
                 ScreenUpdate();
             this.text_buffer.Enqueue(text);
             this.horizontal_text_position_buffer.Enqueue(text_position_horizontal);
             this.last_text_position = text_position_vertical;
+        }
+
+        public void WriteAtLastLine(string text, horizontal_aligment text_position_horizontal)
+        {
+            UpdateLastLine();
+            last_line--;
+            this.text_buffer.Enqueue(text);
+            this.horizontal_text_position_buffer.Enqueue(text_position_horizontal);
+            ScreenUpdate();
         }
 
         public void WriteLineAt(string text, int x_position, int y_position)
