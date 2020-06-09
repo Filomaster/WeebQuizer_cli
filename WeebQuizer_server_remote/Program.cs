@@ -20,6 +20,12 @@ namespace WeebQuizer_server_remote
         public string content { get; set; }
     }
 
+    public class Login
+    {
+        public string username { get; set; }
+        public string password { get; set; }
+    }
+
     public class Commands
     {
         public string name { get; set; }
@@ -29,24 +35,59 @@ namespace WeebQuizer_server_remote
     class Program
     {
         static HttpClient http = new HttpClient();
-        
+
+        // async Task Login()
+        // {
+        //     Login login = new Login();
+
+        //     screen.WriteLine("Pls login", horizontal_aligment.center);
+        //     Console.Write("Username: ");
+        //     login.username = Console.ReadLine();
+        //     Console.Write("Password: ");
+        //     login.password = Console.ReadLine();
+
+
+        //     HttpResponseMessage res = await http.PostAsJsonAsync("/login", login);
+        // }
+
         static async Task Main()
         {
             Screen_Manager screen = new Screen_Manager();
 
-            http.BaseAddress = new Uri("http://localhost:5000/");
+            http.BaseAddress = new Uri("http://localhost:5000/admin/");
             http.DefaultRequestHeaders.Accept.Clear();
             http.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
 
+            Login login = new Login();
+            HttpResponseMessage log = new HttpResponseMessage();
+            string login_redirect;
+            do
+            {
+                screen.WriteLine("Pls login", horizontal_aligment.center);
+                Console.Write("Username: ");
+                login.username = Console.ReadLine();
+                Console.Write("Password: ");
+                login.password = Console.ReadLine();
 
-            
 
-        
+                log = await http.PostAsJsonAsync("login", login);
+                Console.WriteLine((int)log.StatusCode);
 
-            
 
-            const string address = "http://localhost:5000/admin";
+
+                login_redirect = log.RequestMessage.RequestUri.ToString().Replace(http.BaseAddress.ToString(), "");
+
+            } while (login_redirect.Equals("login"));
+
+
+            // var message = JsonConvert.DeserializeObject(await log.Content.ReadAsStringAsync());
+            // Console.Write(message);
+
+
+
+
+            //const string address = "http://localhost:5000/admin";
             //Console.BufferWidth = 256;
             //Console.BufferHeight = 256;
             //const int leap = 2;
@@ -85,37 +126,45 @@ namespace WeebQuizer_server_remote
                 Request req = new Request();
 
                 command = in_arry[0].ToLower();
-                if (!command.ToLower().Equals("exit") && !command.ToLower().Equals("cls"))
+
+                switch (command)
                 {
-                    screen.WriteAtLastLine("Sending...", horizontal_aligment.center);
-                    req.command = command.ToLower();
-                    if (in_arry.Length == 2)
-                        req.content = in_arry[1];
+                    case "exit":
+                        break;
 
-                    HttpResponseMessage res = await http.PostAsJsonAsync(
-                    "admin/command", req);
+                    case "cls":
+                        screen.Clear();
+                        break;
+                    case "logout":
+                        log = await http.DeleteAsync("logout");
+                        break;
+                    default:
+                        screen.WriteAtLastLine("Sending...", horizontal_aligment.center);
+                        req.command = command.ToLower();
+                        if (in_arry.Length == 2)
+                            req.content = in_arry[1];
 
-                    //Console.WriteLine(res.Headers);
+                        HttpResponseMessage res = await http.PostAsJsonAsync(
+                        "command", req);
 
-                    var status = res.StatusCode.ToString();
-                    screen.WriteAtLastLine(status, horizontal_aligment.right);
-                    //Console.WriteLine(res.Headers.GetValues("res-type").Contains("help"));
-                    if (res.Headers.GetValues("res-type").Contains("help"))
-                    {
-                        var response = await res.Content.ReadAsStringAsync();
-                        List<Commands> commands = JsonConvert.DeserializeObject<List<Commands>>(response);
-                        for (int i = 0; i < commands.Count; i++)
+                        // Console.WriteLine(res.StatusCode);
+
+                        var status = res.StatusCode.ToString();
+                        screen.WriteAtLastLine(status, horizontal_aligment.right);
+                        //Console.WriteLine(res.Headers.GetValues("res-type").Contains("help"));
+                        if (res.Headers.Contains("res-type") && res.Headers.GetValues("res-type").Contains("help"))
                         {
-                            Console.WriteLine(" {0}: \t {1}", commands[i].name.ToUpper(), commands[i].description);
+                            var response = await res.Content.ReadAsStringAsync();
+                            List<Commands> commands = JsonConvert.DeserializeObject<List<Commands>>(response);
+                            for (int i = 0; i < commands.Count; i++)
+                            {
+                                Console.WriteLine(" {0}: \t {1}", commands[i].name.ToUpper(), commands[i].description);
+                            }
                         }
-                    }
-                    //await client.EmitAsync("command", comand);
+                        break;
                 }
 
-                if (command.ToLower().Equals("cls"))
-                {
-                    screen.Clear();
-                }
+
 
                 //string res;
 
@@ -144,7 +193,7 @@ namespace WeebQuizer_server_remote
             } while (!command.ToLower().Equals("exit"));
 
             //Console.Read();
-          
+
         }
     }
 }
